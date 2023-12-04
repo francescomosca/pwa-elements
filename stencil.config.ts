@@ -11,6 +11,7 @@ export const config: Config = {
   ],
   buildEs5: "prod",
   sourceMap: false,
+  validateTypes: false,
   extras: {
     enableImportInjection: true
   }

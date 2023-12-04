@@ -1,8 +1,9 @@
-import { h, Component, Element, Prop, State, Build, forceUpdate } from '@stencil/core';
+import { h, Component, Element, Prop, State, Build/* , forceUpdate */ } from "@stencil/core";
+// import { useReducer } from 'react';
+import { FlashMode } from "../../definitions";
 
-import { FlashMode } from '../../definitions';
-
-import './imagecapture';
+import "./imagecapture";
+import { HTMLStencilElement } from "@stencil/core/internal";
 
 declare var window: any;
 
@@ -13,7 +14,7 @@ declare var window: any;
   shadow: true
 })
 export class CameraPWA {
-  @Element() el;
+  @Element() el: HTMLStencilElement;
 
   @Prop() facingMode: string = 'user';
 
@@ -54,6 +55,8 @@ export class CameraPWA {
   flashModes: FlashMode[] = [];
   // Current flash mode
   flashMode: FlashMode = 'off';
+
+  // forceUpdate = useReducer(x => x + 1, 0)[1]
 
   async componentDidLoad() {
     if (Build.isServer) {
@@ -120,20 +123,30 @@ export class CameraPWA {
     this.stream = stream;
     this.videoElement.srcObject = stream;
 
+    try { // un try volutamente paranoico
+      this.videoElement.play().catch(err => {
+        console.warn("play() non riuscito:", err);
+      });
+    } catch (err) {
+      console.warn("play() non riuscito:", err);
+    }
+
+
     if (this.hasImageCapture()) {
       this.imageCapture = new window.ImageCapture(stream.getVideoTracks()[0]);
       await this.initPhotoCapabilities(this.imageCapture);
     } else {
       this.deviceError = 'No image capture';
-      this.handleNoDeviceError && this.handleNoDeviceError();
+      this.handleNoDeviceError?.();
     }
 
     // Always re-render
-    forceUpdate(this.el);
+    //this.forceUpdate();
   }
 
   async initPhotoCapabilities(imageCapture: any) {
     const c = await imageCapture.getPhotoCapabilities();
+    console.debug('getPhotoCapabilities:', c);
 
     if (c.fillLightMode && c.fillLightMode.length > 1) {
       this.flashModes = c.fillLightMode.map(m => m);
